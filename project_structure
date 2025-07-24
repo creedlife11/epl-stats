@@ -1,0 +1,13 @@
+/pages
+ ├ index.jsx                ← Homepage with table + links
+ ├ stats
+ │   ├ attacking.jsx        ← League’s top attacking players
+ │   └ defensive.jsx        ← League’s top defensive players
+ └ teams
+     └ [teamId].jsx         ← Dynamic team page
+/components
+ ├ Table.jsx                ← Reusable standings table
+ ├ PlayerStatsList.jsx      ← List of player‐stat cards
+ └ TeamHeader.jsx           ← Club crest, name, basic info
+/styles
+ └ globals.css              ← Tailwind imports
