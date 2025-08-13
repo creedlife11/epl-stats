@@ -1,16 +1,21 @@
 export async function getStaticProps() {
-  // Fetch team standings for defensive stats
-  const standingsRes = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
-    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-  });
-  
   let teams = [];
   let goalkeepers = [];
   
+  // Fetch team standings for defensive stats
   try {
-    const standingsData = await standingsRes.json();
-    teams = Array.isArray(standingsData.standings?.[0]?.table) ? standingsData.standings[0].table : [];
-  } catch {
+    const standingsRes = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    
+    if (standingsRes.ok) {
+      const standingsData = await standingsRes.json();
+      teams = Array.isArray(standingsData?.standings?.[0]?.table) ? standingsData.standings[0].table : [];
+    } else {
+      console.log('Standings API returned:', standingsRes.status);
+    }
+  } catch (error) {
+    console.log('Error fetching standings:', error.message);
     teams = [];
   }
 
@@ -19,13 +24,16 @@ export async function getStaticProps() {
     const scorersRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
       headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
     });
-    const scorersData = await scorersRes.json();
     
-    // Filter for goalkeepers and defenders with good defensive records
-    goalkeepers = scorersData.scorers?.filter(player => 
-      player.player.position === 'Goalkeeper' || player.player.position === 'Defender'
-    ) || [];
-  } catch {
+    if (scorersRes.ok) {
+      const scorersData = await scorersRes.json();
+      // Filter for goalkeepers and defenders with good defensive records
+      goalkeepers = (scorersData?.scorers || []).filter(player => 
+        player?.player?.position === 'Goalkeeper' || player?.player?.position === 'Defender'
+      );
+    }
+  } catch (error) {
+    console.log('Error fetching defensive players:', error.message);
     goalkeepers = [];
   }
 

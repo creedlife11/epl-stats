@@ -23,15 +23,23 @@ export async function getStaticProps({ params }) {
     });
     
     if (!teamRes.ok) {
+      // Only return 404 for actual 404 responses (team doesn't exist)
+      if (teamRes.status === 404) {
+        return { notFound: true };
+      }
       throw new Error(`HTTP error! status: ${teamRes.status}`);
     }
     
     team = await teamRes.json();
   } catch (error) {
-    console.log('Team data not available:', error.message);
-    // Return a fallback team object
-    return {
-      notFound: true
+    console.log('Team data fetch error:', error.message);
+    // Create a fallback team object instead of 404
+    team = {
+      id: parseInt(id),
+      name: `Team ${id}`,
+      crest: '',
+      venue: 'Unknown',
+      squad: []
     };
   }
 
@@ -96,11 +104,11 @@ export default function TeamPage({ team, teamScorers, teamAssists }) {
       <TeamHeader team={team} />
       
       {/* Top Performers Section */}
-      {(topScorers.length > 0 || topAssists.length > 0) && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Top Performers</h2>
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Top Performers</h2>
+        {(topScorers.length > 0 || topAssists.length > 0) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {topScorers.length > 0 && (
+            {topScorers.length > 0 ? (
               <div>
                 <h3 className="text-lg font-medium mb-2">Top Scorers</h3>
                 <div className="space-y-2">
@@ -112,9 +120,16 @@ export default function TeamPage({ team, teamScorers, teamAssists }) {
                   ))}
                 </div>
               </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-medium mb-2">Top Scorers</h3>
+                <div className="p-4 bg-gray-50 rounded text-center text-gray-500">
+                  No scoring data available for this season
+                </div>
+              </div>
             )}
             
-            {topAssists.length > 0 && (
+            {topAssists.length > 0 ? (
               <div>
                 <h3 className="text-lg font-medium mb-2">Top Assists</h3>
                 <div className="space-y-2">
@@ -126,14 +141,31 @@ export default function TeamPage({ team, teamScorers, teamAssists }) {
                   ))}
                 </div>
               </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-medium mb-2">Top Assists</h3>
+                <div className="p-4 bg-gray-50 rounded text-center text-gray-500">
+                  No assist data available for this season
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="p-6 bg-gray-50 rounded text-center text-gray-500">
+            Performance data not available for this team in the current season
+          </div>
+        )}
+      </div>
 
       {/* Full Squad Section */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">Full Squad</h2>
-      <PlayerStatsList data={team.squad} />
+      {team?.squad && team.squad.length > 0 ? (
+        <PlayerStatsList data={team.squad} />
+      ) : (
+        <div className="p-6 bg-gray-50 rounded text-center text-gray-500">
+          Squad information not available
+        </div>
+      )}
     </div>
   );
 }

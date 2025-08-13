@@ -1,14 +1,21 @@
 export async function getStaticProps() {
-  const res = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
-    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-  });
   let players = [];
   try {
-    const data = await res.json();
-    players = Array.isArray(data.scorers) ? data.scorers : [];
-  } catch {
+    const res = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      players = Array.isArray(data?.scorers) ? data.scorers : [];
+    } else {
+      console.log('Scorers API returned:', res.status);
+    }
+  } catch (error) {
+    console.log('Error fetching scorers:', error.message);
     players = [];
   }
+  
   return {
     props: { players },
     revalidate: 60 * 15
