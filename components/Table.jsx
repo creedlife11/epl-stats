@@ -17,7 +17,19 @@ export default function Table({ rows }) {
           <tr key={row.rank} className="text-center border-t">
             <td className="px-4 py-2">{row.rank}</td>
             <td className="px-4 py-2">
-              <Link href={row.link}><a className="hover:underline">{row.team}</a></Link>
+              <div className="flex items-center space-x-2">
+                {row.crest && (
+                  <img 
+                    src={row.crest} 
+                    alt={`${row.team} crest`}
+                    className="w-6 h-6 object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
+                <Link href={row.link}><a className="hover:underline">{row.team}</a></Link>
+              </div>
             </td>
             <td className="px-4 py-2">{row.played}</td>
             <td className="px-4 py-2">{row.points}</td>
