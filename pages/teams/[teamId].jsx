@@ -16,17 +16,37 @@ export async function getStaticProps({ params }) {
   const id = params.teamId;
   
   // Fetch team basic info
-  const teamRes = await fetch(`https://api.football-data.org/v4/teams/${id}`, {
-    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-  });
-  const team = await teamRes.json();
+  let team = {};
+  try {
+    const teamRes = await fetch(`https://api.football-data.org/v4/teams/${id}`, {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    
+    if (!teamRes.ok) {
+      throw new Error(`HTTP error! status: ${teamRes.status}`);
+    }
+    
+    team = await teamRes.json();
+  } catch (error) {
+    console.log('Team data not available:', error.message);
+    // Return a fallback team object
+    return {
+      notFound: true
+    };
+  }
 
   // Fetch top scorers for this team
-  const scorersRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
-    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-  });
-  const scorersData = await scorersRes.json();
-  const teamScorers = scorersData.scorers.filter(p => p.team.id == id);
+  let teamScorers = [];
+  try {
+    const scorersRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    const scorersData = await scorersRes.json();
+    teamScorers = (scorersData?.scorers || []).filter(p => p.team.id == id);
+  } catch (error) {
+    console.log('Scorers data not available:', error.message);
+    teamScorers = [];
+  }
 
   // Fetch assists data (if available)
   let teamAssists = [];
@@ -35,15 +55,16 @@ export async function getStaticProps({ params }) {
       headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
     });
     const assistsData = await assistsRes.json();
-    teamAssists = assistsData.scorers?.filter(p => p.team.id == id) || [];
+    teamAssists = (assistsData?.scorers || []).filter(p => p.team.id == id);
   } catch (error) {
-    console.log('Assists data not available');
+    console.log('Assists data not available:', error.message);
+    teamAssists = [];
   }
 
   // Combine squad with performance data
-  const playersWithStats = team.squad.map(player => {
-    const scorerData = teamScorers.find(s => s.player.id === player.id);
-    const assistData = teamAssists.find(a => a.player.id === player.id);
+  const playersWithStats = (team?.squad || []).map(player => {
+    const scorerData = teamScorers.find(s => s?.player?.id === player?.id);
+    const assistData = teamAssists.find(a => a?.player?.id === player?.id);
     
     return {
       ...player,
