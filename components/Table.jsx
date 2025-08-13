@@ -19,76 +19,84 @@ export default function Table({ rows }) {
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg">
-      <table className="min-w-full">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-lg">
+      <table className="min-w-full border-collapse">
         <thead className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
           <tr>
-            <th className="px-3 py-4 text-left text-xs font-semibold uppercase tracking-wider">Pos</th>
-            <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider">Team</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">P</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">W</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">D</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">L</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">GF</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">GA</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider">GD</th>
+            <th className="px-3 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600">Pos</th>
+            <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600">Team</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">P</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">W</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">D</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">L</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GF</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GA</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GD</th>
             <th className="px-3 py-4 text-center text-xs font-semibold uppercase tracking-wider">Pts</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="bg-white">
           {rows.map((row, index) => (
             <tr 
               key={row.rank} 
-              className={`${getPositionColor(row.rank)} transition-all duration-200 hover:shadow-md`}
+              className={`${getPositionColor(row.rank)} transition-all duration-200 hover:shadow-md border-b border-gray-200`}
             >
-              <td className="px-3 py-4">
+              <td className="px-3 py-4 border-r border-gray-200">
                 <div className="flex items-center space-x-1">
                   <span className="text-sm font-bold text-gray-700">{row.rank}</span>
                   <span className="text-sm">{getPositionBadge(row.rank)}</span>
                 </div>
               </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center space-x-2">
-                  {row.crest && (
+              <td className="px-4 py-4 border-r border-gray-200">
+                <div className="flex items-center space-x-3">
+                  {row.crest ? (
                     <Link href={row.link}>
-                      <a className="hover:scale-110 transition-transform duration-200">
-                        <img 
-                          src={row.crest} 
-                          alt={`${row.team} crest`}
-                          className="w-6 h-6 object-contain cursor-pointer rounded-full shadow-sm"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
+                      <a className="hover:scale-110 transition-transform duration-200 flex-shrink-0">
+                        <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full border border-gray-200 shadow-sm">
+                          <img 
+                            src={row.crest} 
+                            alt={`${row.team} crest`}
+                            className="w-6 h-6 object-contain cursor-pointer"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       </a>
                     </Link>
+                  ) : (
+                    <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full border border-gray-200 flex-shrink-0">
+                      <span className="text-xs font-bold text-gray-400">
+                        {row.team?.charAt(0) || '?'}
+                      </span>
+                    </div>
                   )}
                   <Link href={row.link}>
-                    <a className="font-medium text-gray-900 hover:text-blue-600 transition-colors duration-200 text-sm">
+                    <a className="font-medium text-gray-900 hover:text-blue-600 transition-colors duration-200 text-sm truncate">
                       {row.team}
                     </a>
                   </Link>
                 </div>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-gray-700">{row.played}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-green-600">{row.won || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-yellow-600">{row.drawn || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-red-600">{row.lost || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-blue-600">{row.goalsFor || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-red-500">{row.goalsAgainst || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center">
+              <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className={`text-sm font-bold ${
                   (row.goalDifference || 0) > 0 ? 'text-green-600' : 
                   (row.goalDifference || 0) < 0 ? 'text-red-600' : 'text-gray-600'
@@ -107,26 +115,26 @@ export default function Table({ rows }) {
       </table>
       
       {/* Legend */}
-      <div className="bg-gray-50 px-6 py-4 border-t">
+      <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Position Legend */}
           <div>
             <h4 className="text-xs font-semibold text-gray-700 mb-2">QUALIFICATION</h4>
             <div className="flex flex-wrap gap-3 text-xs">
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 bg-green-500 rounded"></div>
+                <div className="w-3 h-3 bg-green-500 rounded border border-green-600"></div>
                 <span>Champions League</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                <div className="w-3 h-3 bg-orange-500 rounded border border-orange-600"></div>
                 <span>Europa League</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                <div className="w-3 h-3 bg-yellow-500 rounded border border-yellow-600"></div>
                 <span>Conference League</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <div className="w-3 h-3 bg-red-500 rounded border border-red-600"></div>
                 <span>Relegation</span>
               </div>
             </div>
