@@ -14,27 +14,104 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const id = params.teamId;
+  
+  // Fetch team basic info
   const teamRes = await fetch(`https://api.football-data.org/v4/teams/${id}`, {
     headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
   });
   const team = await teamRes.json();
 
-  // Optionally: get all scorers to filter top scorers for this team
-  // const scorersRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {...});
-  // const scorersData = await scorersRes.json();
-  // const teamScorers = scorersData.scorers.filter(p => p.team.id == id);
+  // Fetch top scorers for this team
+  const scorersRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers', {
+    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+  });
+  const scorersData = await scorersRes.json();
+  const teamScorers = scorersData.scorers.filter(p => p.team.id == id);
+
+  // Fetch assists data (if available)
+  let teamAssists = [];
+  try {
+    const assistsRes = await fetch('https://api.football-data.org/v4/competitions/PL/scorers?type=assists', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    const assistsData = await assistsRes.json();
+    teamAssists = assistsData.scorers?.filter(p => p.team.id == id) || [];
+  } catch (error) {
+    console.log('Assists data not available');
+  }
+
+  // Combine squad with performance data
+  const playersWithStats = team.squad.map(player => {
+    const scorerData = teamScorers.find(s => s.player.id === player.id);
+    const assistData = teamAssists.find(a => a.player.id === player.id);
+    
+    return {
+      ...player,
+      goals: scorerData?.goals || 0,
+      assists: assistData?.assists || 0,
+      penalties: scorerData?.penalties || 0
+    };
+  });
 
   return {
-    props: { team }, // optionally add teamScorers
+    props: { 
+      team: {
+        ...team,
+        squad: playersWithStats
+      },
+      teamScorers,
+      teamAssists
+    },
     revalidate: 60 * 30
   };
 }
 
-export default function TeamPage({ team }) {
+export default function TeamPage({ team, teamScorers, teamAssists }) {
+  const topScorers = teamScorers?.slice(0, 5) || [];
+  const topAssists = teamAssists?.slice(0, 5) || [];
+
   return (
     <div className="container mx-auto p-4">
       <TeamHeader team={team} />
-      <h2 className="text-2xl font-semibold mt-6 mb-2">Players</h2>
+      
+      {/* Top Performers Section */}
+      {(topScorers.length > 0 || topAssists.length > 0) && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Top Performers</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {topScorers.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">Top Scorers</h3>
+                <div className="space-y-2">
+                  {topScorers.map((scorer, index) => (
+                    <div key={scorer.player.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span>{index + 1}. {scorer.player.name}</span>
+                      <span className="font-medium">{scorer.goals} goals</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {topAssists.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">Top Assists</h3>
+                <div className="space-y-2">
+                  {topAssists.map((assist, index) => (
+                    <div key={assist.player.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span>{index + 1}. {assist.player.name}</span>
+                      <span className="font-medium">{assist.assists} assists</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Full Squad Section */}
+      <h2 className="text-2xl font-semibold mt-6 mb-4">Full Squad</h2>
       <PlayerStatsList data={team.squad} />
     </div>
   );
