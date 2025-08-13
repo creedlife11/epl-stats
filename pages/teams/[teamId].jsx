@@ -2,14 +2,31 @@ import TeamHeader from '../../components/TeamHeader';
 import PlayerStatsList from '../../components/PlayerStatsList';
 
 export async function getStaticPaths() {
-  const res = await fetch('https://api.football-data.org/v4/competitions/PL/teams', {
-    headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-  });
-  const { teams } = await res.json();
-  return {
-    paths: teams.map(t => ({ params: { teamId: t.id.toString() } })),
-    fallback: 'blocking'
-  };
+  try {
+    // Use standings to get current Premier League teams
+    const res = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    const teams = data?.standings?.[0]?.table || [];
+    
+    return {
+      paths: teams.map(t => ({ params: { teamId: t.team.id.toString() } })),
+      fallback: 'blocking'
+    };
+  } catch (error) {
+    console.log('Error fetching teams for static paths:', error.message);
+    // Fallback to empty paths, rely on fallback: 'blocking'
+    return {
+      paths: [],
+      fallback: 'blocking'
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
@@ -17,58 +34,49 @@ export async function getStaticProps({ params }) {
   
   // Fetch team basic info
   let team = {};
+  let teamFromStandings = null;
+  
+  // First, always try to get team from standings (this is most reliable)
+  try {
+    const standingsRes = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+    });
+    
+    if (standingsRes.ok) {
+      const standingsData = await standingsRes.json();
+      teamFromStandings = standingsData?.standings?.[0]?.table?.find(t => t.team.id == id);
+    }
+  } catch (error) {
+    console.log('Standings fetch error:', error.message);
+  }
+  
+  // If team not in current standings, return 404
+  if (!teamFromStandings) {
+    console.log(`Team ${id} not found in current Premier League standings`);
+    return { notFound: true };
+  }
+  
+  // Try to get detailed team info
   try {
     const teamRes = await fetch(`https://api.football-data.org/v4/teams/${id}`, {
       headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
     });
     
-    if (!teamRes.ok) {
-      // Only return 404 for actual 404 responses (team doesn't exist)
-      if (teamRes.status === 404) {
-        return { notFound: true };
-      }
+    if (teamRes.ok) {
+      team = await teamRes.json();
+    } else {
       throw new Error(`HTTP error! status: ${teamRes.status}`);
     }
-    
-    team = await teamRes.json();
   } catch (error) {
-    console.log('Team data fetch error:', error.message);
-    
-    // Try to get team info from standings as fallback
-    try {
-      const standingsRes = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
-        headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
-      });
-      
-      if (standingsRes.ok) {
-        const standingsData = await standingsRes.json();
-        const teamFromStandings = standingsData?.standings?.[0]?.table?.find(t => t.team.id == id);
-        
-        if (teamFromStandings) {
-          team = {
-            id: teamFromStandings.team.id,
-            name: teamFromStandings.team.name,
-            crest: teamFromStandings.team.crest,
-            venue: teamFromStandings.team.venue || 'Unknown',
-            squad: [] // We'll populate this with basic data if possible
-          };
-        } else {
-          throw new Error('Team not found in standings');
-        }
-      } else {
-        throw new Error('Standings API also failed');
-      }
-    } catch (fallbackError) {
-      console.log('Fallback team fetch also failed:', fallbackError.message);
-      // Last resort: create a basic team object
-      team = {
-        id: parseInt(id),
-        name: `Team ${id}`,
-        crest: '',
-        venue: 'Unknown',
-        squad: []
-      };
-    }
+    console.log(`Team ${id} detailed fetch error:`, error.message);
+    // Use standings data as fallback
+    team = {
+      id: teamFromStandings.team.id,
+      name: teamFromStandings.team.name,
+      crest: teamFromStandings.team.crest,
+      venue: teamFromStandings.team.venue || 'Stadium information not available',
+      squad: []
+    };
   }
 
   // Fetch top scorers for this team
