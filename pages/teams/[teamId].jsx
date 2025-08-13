@@ -64,18 +64,26 @@ export async function getStaticProps({ params }) {
     
     if (teamRes.ok) {
       team = await teamRes.json();
+    } else if (teamRes.status === 429) {
+      // Rate limit exceeded - use standings data
+      console.log(`Rate limit exceeded for team ${id}, using standings data`);
+      throw new Error('Rate limit exceeded');
     } else {
       throw new Error(`HTTP error! status: ${teamRes.status}`);
     }
   } catch (error) {
     console.log(`Team ${id} detailed fetch error:`, error.message);
-    // Use standings data as fallback
+    // Use standings data as fallback (this is actually quite good data)
     team = {
       id: teamFromStandings.team.id,
       name: teamFromStandings.team.name,
       crest: teamFromStandings.team.crest,
       venue: teamFromStandings.team.venue || 'Stadium information not available',
-      squad: []
+      squad: [], // Will show "Squad information not available" message
+      // Add some basic info from standings
+      founded: null,
+      clubColors: null,
+      website: null
     };
   }
 
@@ -127,7 +135,7 @@ export async function getStaticProps({ params }) {
       teamScorers,
       teamAssists
     },
-    revalidate: 60 * 30
+    revalidate: 60 * 60 * 2 // Revalidate every 2 hours to reduce API calls
   };
 }
 

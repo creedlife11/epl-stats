@@ -11,7 +11,7 @@ export async function getStaticProps() {
   
   return {
     props: { table },
-    revalidate: 60 * 15  // re‑build every 15 minutes
+    revalidate: 60 * 60  // re‑build every hour to reduce API calls
   };
 }
 
