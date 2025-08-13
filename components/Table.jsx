@@ -10,6 +10,15 @@ export default function Table({ rows }) {
     return 'bg-white hover:bg-gray-50';
   };
 
+  const getRowBorderClass = (position) => {
+    // Add thicker borders after qualification zones
+    if (position === 4) return 'border-b-4 border-green-400'; // After Champions League
+    if (position === 5) return 'border-b-4 border-orange-400'; // After Europa League
+    if (position === 6) return 'border-b-4 border-yellow-400'; // After Conference League
+    if (position === 17) return 'border-b-4 border-red-400'; // Before relegation zone
+    return 'border-b-2 border-gray-300'; // Standard row separator
+  };
+
   const getPositionBadge = (position) => {
     if (position <= 4) return '🏆';
     if (position === 5) return '🥈';
@@ -23,15 +32,15 @@ export default function Table({ rows }) {
       <table className="min-w-full border-collapse">
         <thead className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
           <tr>
-            <th className="px-3 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600">Pos</th>
-            <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600">Team</th>
+            <th className="px-3 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r-2 border-gray-500">Pos</th>
+            <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r-2 border-gray-500">Team</th>
             <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">P</th>
             <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">W</th>
             <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">D</th>
             <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">L</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GF</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GA</th>
-            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600">GD</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r-2 border-gray-500">GF</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r-2 border-gray-500">GA</th>
+            <th className="px-2 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r-2 border-gray-500">GD</th>
             <th className="px-3 py-4 text-center text-xs font-semibold uppercase tracking-wider">Pts</th>
           </tr>
         </thead>
@@ -39,15 +48,15 @@ export default function Table({ rows }) {
           {rows.map((row, index) => (
             <tr 
               key={row.rank} 
-              className={`${getPositionColor(row.rank)} transition-all duration-200 hover:shadow-md border-b border-gray-200`}
+              className={`${getPositionColor(row.rank)} ${getRowBorderClass(row.rank)} transition-all duration-200 hover:shadow-md`}
             >
-              <td className="px-3 py-4 border-r border-gray-200">
+              <td className="px-3 py-4 border-r-2 border-gray-300">
                 <div className="flex items-center space-x-1">
                   <span className="text-sm font-bold text-gray-700">{row.rank}</span>
                   <span className="text-sm">{getPositionBadge(row.rank)}</span>
                 </div>
               </td>
-              <td className="px-4 py-4 border-r border-gray-200">
+              <td className="px-4 py-4 border-r-2 border-gray-300">
                 <div className="flex items-center space-x-3">
                   {row.crest ? (
                     <Link href={row.link}>
@@ -90,13 +99,13 @@ export default function Table({ rows }) {
               <td className="px-2 py-4 text-center border-r border-gray-200">
                 <span className="text-sm font-medium text-red-600">{row.lost || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center border-r border-gray-200">
+              <td className="px-2 py-4 text-center border-r-2 border-gray-300">
                 <span className="text-sm font-medium text-blue-600">{row.goalsFor || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center border-r border-gray-200">
+              <td className="px-2 py-4 text-center border-r-2 border-gray-300">
                 <span className="text-sm font-medium text-red-500">{row.goalsAgainst || 0}</span>
               </td>
-              <td className="px-2 py-4 text-center border-r border-gray-200">
+              <td className="px-2 py-4 text-center border-r-2 border-gray-300">
                 <span className={`text-sm font-bold ${
                   (row.goalDifference || 0) > 0 ? 'text-green-600' : 
                   (row.goalDifference || 0) < 0 ? 'text-red-600' : 'text-gray-600'
