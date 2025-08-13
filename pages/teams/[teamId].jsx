@@ -33,14 +33,42 @@ export async function getStaticProps({ params }) {
     team = await teamRes.json();
   } catch (error) {
     console.log('Team data fetch error:', error.message);
-    // Create a fallback team object instead of 404
-    team = {
-      id: parseInt(id),
-      name: `Team ${id}`,
-      crest: '',
-      venue: 'Unknown',
-      squad: []
-    };
+    
+    // Try to get team info from standings as fallback
+    try {
+      const standingsRes = await fetch('https://api.football-data.org/v4/competitions/PL/standings', {
+        headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_TOKEN }
+      });
+      
+      if (standingsRes.ok) {
+        const standingsData = await standingsRes.json();
+        const teamFromStandings = standingsData?.standings?.[0]?.table?.find(t => t.team.id == id);
+        
+        if (teamFromStandings) {
+          team = {
+            id: teamFromStandings.team.id,
+            name: teamFromStandings.team.name,
+            crest: teamFromStandings.team.crest,
+            venue: teamFromStandings.team.venue || 'Unknown',
+            squad: [] // We'll populate this with basic data if possible
+          };
+        } else {
+          throw new Error('Team not found in standings');
+        }
+      } else {
+        throw new Error('Standings API also failed');
+      }
+    } catch (fallbackError) {
+      console.log('Fallback team fetch also failed:', fallbackError.message);
+      // Last resort: create a basic team object
+      team = {
+        id: parseInt(id),
+        name: `Team ${id}`,
+        crest: '',
+        venue: 'Unknown',
+        squad: []
+      };
+    }
   }
 
   // Fetch top scorers for this team
@@ -163,7 +191,8 @@ export default function TeamPage({ team, teamScorers, teamAssists }) {
         <PlayerStatsList data={team.squad} />
       ) : (
         <div className="p-6 bg-gray-50 rounded text-center text-gray-500">
-          Squad information not available
+          <p className="mb-2">Squad information not available for {team?.name || 'this team'}</p>
+          <p className="text-sm">This may be due to API limitations or the team not being in the current Premier League season.</p>
         </div>
       )}
     </div>
