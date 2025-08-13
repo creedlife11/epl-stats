@@ -50,10 +50,17 @@ export async function getStaticProps({ params }) {
     console.log('Standings fetch error:', error.message);
   }
   
-  // If team not in current standings, return 404
+  // If team not in current standings, create a basic team object instead of 404
   if (!teamFromStandings) {
-    console.log(`Team ${id} not found in current Premier League standings`);
-    return { notFound: true };
+    console.log(`Team ${id} not found in current Premier League standings or API failed`);
+    teamFromStandings = {
+      team: {
+        id: parseInt(id),
+        name: `Team ${id}`,
+        crest: '',
+        venue: 'Unknown'
+      }
+    };
   }
   
   // Try to get detailed team info
