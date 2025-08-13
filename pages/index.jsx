@@ -45,6 +45,12 @@ export default function Home({ table }) {
               team: row.team.name,
               crest: row.team.crest,
               played: row.playedGames,
+              won: row.won,
+              drawn: row.draw,
+              lost: row.lost,
+              goalsFor: row.goalsFor,
+              goalsAgainst: row.goalsAgainst,
+              goalDifference: row.goalDifference,
               points: row.points,
               link: `/teams/${row.team.id}`
             }))} />
